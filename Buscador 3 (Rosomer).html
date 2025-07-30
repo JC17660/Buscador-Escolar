@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Buscador Escolar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    header {
+      background: #3498db;
+      color: white;
+      padding: 20px 10px;
+      text-align: center;
+    }
+    nav {
+      background: #2980b9;
+      padding: 10px;
+      text-align: center;
+    }
+    nav a {
+      color: white;
+      margin: 0 15px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    section {
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      margin-bottom: 20px;
+      border-radius: 6px;
+    }
+    footer {
+      text-align: center;
+      padding: 10px;
+      background: #ddd;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px 3px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .clear-button {
+      background-color: #e74c3c;
+    }
+    .clear-button:hover {
+      background-color: #c0392b;
+    }
+    .history-item {
+      display: inline-block;
+      margin: 5px;
+      background: #ecf0f1;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #summaryResult {
+      background: #ecf0f1;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Buscador Escolar</h1>
+  <p>Encuentra recursos y resume textos para tus tareas escolares</p>
+</header>
+
+<nav>
+  <a href="#inicio">Inicio</a>
+  <a href="#buscador">Buscador</a>
+  <a href="#resumir">Resumir</a>
+  <a href="#contacto">Contacto</a>
+</nav>
+
+<section id="inicio">
+  <h2>Bienvenido</h2>
+  <p>Este sitio te ayuda a buscar información y resumir textos para tus tareas escolares.</p>
+</section>
+
+<section id="buscador">
+  <h2>Buscador Escolar</h2>
+  <input type="text" id="searchInput" placeholder="Ej. ciclo del agua, historia de México..." />
+  <br>
+  <button onclick="search('wikipedia')">Buscar en Wikipedia</button>
+  <button onclick="search('khan')">Buscar en Khan Academy</button>
+  <button onclick="search('scholar')">Buscar en Google Scholar</button>
+  <button onclick="search('general')">Buscar en Google</button>
+
+  <div id="historyList">
+    <h3>Historial de búsquedas</h3>
+    <div id="historyContainer"></div>
+    <button class="clear-button" onclick="clearHistory()">Borrar historial</button>
+  </div>
+</section>
+
+<section id="resumir">
+  <h2>Resumidor de Texto</h2>
+  <p>Pega cualquier texto largo y obtén un resumen automático.</p>
+  <textarea id="textToSummarize" rows="10" placeholder="Pega aquí tu texto..."></textarea>
+  <br>
+  <button onclick="summarizeText()">Resumir texto</button>
+  <h3>Resumen:</h3>
+  <div id="summaryResult"></div>
+</section>
+
+<section id="contacto">
+  <h2>Contacto</h2>
+  <p>¿Tienes dudas o sugerencias? Escribe a: <a href="mailto:profesor@escuela.edu">profesor@escuela.edu</a></p>
+</section>
+
+<footer>
+  <p>© 2025 Buscador Escolar</p>
+</footer>
+
+<script>
+  // ===== BUSCADOR + HISTORIAL =====
+  function updateHistoryDisplay() {
+    const container = document.getElementById("historyContainer");
+    container.innerHTML = "";
+    const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+    history.forEach(term => {
+      const span = document.createElement("span");
+      span.className = "history-item";
+      span.textContent = term;
+      span.onclick = () => {
+        document.getElementById("searchInput").value = term;
+      };
+      container.appendChild(span);
+    });
+  }
+
+  function addToHistory(term) {
+    let history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+    if (!history.includes(term)) {
+      history.unshift(term);
+      if (history.length > 20) history.pop();
+      localStorage.setItem("searchHistory", JSON.stringify(history));
+    }
+    updateHistoryDisplay();
+  }
+
+  function clearHistory() {
+    localStorage.removeItem("searchHistory");
+    updateHistoryDisplay();
+  }
+
+  function search(source) {
+    const query = document.getElementById("searchInput").value.trim();
+    if (!query) {
+      alert("Por favor escribe un tema para buscar.");
+      return;
+    }
+
+    addToHistory(query);
+    let url = "";
+
+    switch (source) {
+      case "wikipedia":
+        url = `https://es.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(query)}`;
+        break;
+      case "khan":
+        url = `https://es.khanacademy.org/search?page_search_query=${encodeURIComponent(query)}`;
+        break;
+      case "scholar":
+        url = `https://scholar.google.com/scholar?q=${encodeURIComponent(query)}`;
+        break;
+      case "general":
+        url = `https://www.google.com/search?q=${encodeURIComponent(query)}+educación`;
+        break;
+    }
+
+    window.open(url, "_blank");
+  }
+
+  // ===== RESUMIDOR DE TEXTO =====
+  function summarizeText() {
+    const text = document.getElementById("textToSummarize").value.trim();
+    if (!text) {
+      alert("Por favor pega algún texto para resumir.");
+      return;
+    }
+
+    const sentences = text.match(/[^.!?]+[.!?]/g) || [text]; // oraciones
+    const wordFreq = {};
+    const words = text.toLowerCase().match(/\w+/g);
+
+    words.forEach(word => {
+      if (word.length > 3) {
+        wordFreq[word] = (wordFreq[word] || 0) + 1;
+      }
+    });
+
+    const scoredSentences = sentences.map(sentence => {
+      let score = 0;
+      const sentenceWords = sentence.toLowerCase().match(/\w+/g) || [];
+      sentenceWords.forEach(word => {
+        if (wordFreq[word]) score += wordFreq[word];
+      });
+      return { sentence, score };
+    });
+
+    const topSentences = scoredSentences
+      .sort((a, b) => b.score - a.score)
+      .slice(0, Math.ceil(sentences.length / 3))
+      .map(item => item.sentence.trim());
+
+    document.getElementById("summaryResult").innerText = topSentences.join(" ");
+  }
+
+  // Inicializar historial al cargar
+  window.onload = updateHistoryDisplay;
+</script>
+
+</body>
+</html>
